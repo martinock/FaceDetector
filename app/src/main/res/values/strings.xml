@@ -5,4 +5,6 @@
     <string name="welcome_instruction">Browse your image and get the image information</string>
     <string name="process">Process</string>
     <string name="browse">Browse...</string>
+    <string name="loading">Loading</string>
+    <string name="please_wait">Please Wait...</string>
 </resources>
