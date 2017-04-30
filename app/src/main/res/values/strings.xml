@@ -1,3 +1,8 @@
 <resources>
+    <!-- Common -->
     <string name="app_name">FaceDetector</string>
+    <string name="welcome_title">Welcome to FaceDetector!</string>
+    <string name="welcome_instruction">Browse your image and get the image information</string>
+    <string name="process">Process</string>
+    <string name="browse">Browse...</string>
 </resources>
