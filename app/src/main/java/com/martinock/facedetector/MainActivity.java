@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button btnBrowse = (Button) findViewById(R.id.btn_browse);
-        Button btnProcess = (Button) findViewById(R.id.btn_process);
+        Button btnIdentify = (Button) findViewById(R.id.btn_identify);
+        Button btnDetect = (Button) findViewById(R.id.btn_detect);
         llActionButtons = (LinearLayout) findViewById(R.id.ll_action_buttons);
         imagePreview = (ImageView) findViewById(R.id.image_preview);
 
@@ -58,10 +59,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnProcess.setOnClickListener(new View.OnClickListener() {
+        btnDetect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getFace(paint);
+                detectFace();
+            }
+        });
+
+        btnIdentify.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                identifyFace();
             }
         });
     }

@@ -71,7 +71,7 @@
                 android:background="@color/colorPrimary"/>
 
             <Button
-                android:id="@+id/btn_process"
+                android:id="@+id/btn_identify"
                 android:layout_margin="10dp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
