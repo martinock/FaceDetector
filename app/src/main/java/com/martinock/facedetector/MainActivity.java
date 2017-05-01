@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private FaceServiceClient faceServiceClient;
     com.microsoft.projectoxford.face.contract.Face[] facesDetected;
 
-    class DetectTask extends AsyncTask<InputStream, String,
+    private class DetectTask extends AsyncTask<InputStream, String,
             com.microsoft.projectoxford.face.contract.Face[]> {
 
         private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
@@ -158,73 +158,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    /* Detect faces on a picture */
-    private void getFace(final Paint p) {
-        mProgressDialog = ProgressDialog.show(this, getString(R.string.loading),
-                getString(R.string.please_wait), true, false);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (imageBitmap != null) {
-                    resultBitmap = Bitmap.createBitmap(imageBitmap.getWidth(),
-                            imageBitmap.getHeight(), Bitmap.Config.RGB_565);
-                    Canvas canvas = new Canvas(resultBitmap);
-                    canvas.drawBitmap(imageBitmap, 0, 0, null);
-                    com.google.android.gms.vision.face.FaceDetector faceDetector = new
-                            com.google.android.gms.vision.face.FaceDetector.Builder(
-                            getApplicationContext())
-                            .setTrackingEnabled(false)
-                            .setLandmarkType(com.google.android.gms.vision.face.FaceDetector.ALL_LANDMARKS)
-                            .setMode(com.google.android.gms.vision.face.FaceDetector.FAST_MODE)
-                            .build();
-                    if (!faceDetector.isOperational()) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mProgressDialog.dismiss();
-                                Toast.makeText(getApplicationContext(),
-                                        "Face Detector could not be set up on your device",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        });
-                        return;
-                    }
-
-                    Frame frame = new Frame.Builder().setBitmap(imageBitmap).build();
-                    SparseArray<Face> sparseArray = faceDetector.detect(frame);
-
-                    for (int i = 0; i < sparseArray.size(); ++i) {
-                        Face face = sparseArray.valueAt(i);
-                        float x1 = face.getPosition().x;
-                        float y1 = face.getPosition().y;
-                        float x2 = x1 + face.getWidth();
-                        float y2 = y1 + face.getHeight();
-                        RectF rectF = new RectF(x1, y1, x2, y2);
-                        canvas.drawRoundRect(rectF, 2, 2, p);
-                    }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mProgressDialog.dismiss();
-                            imagePreview.setImageDrawable(new BitmapDrawable(getResources(),
-                                    resultBitmap));
-                        }
-                    });
-                } else {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mProgressDialog.dismiss();
-                            Toast.makeText(getApplicationContext(),
-                                    "You haven't select an image", Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-            }
-        }).start();
     }
 
     private void detectFace() {
