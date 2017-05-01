@@ -54,11 +54,16 @@ public class MainActivity extends AppCompatActivity {
                 publishProgress("Detecting Faces...");
                 com.microsoft.projectoxford.face.contract.Face[] results = faceServiceClient.detect(params[0], true, false, null);
                 if (results == null) {
-                    publishProgress("Nothing Detected");
+                    publishProgress("No face detected. Please upload another image");
                     return null;
                 } else {
-                    publishProgress("Detection Finished. Detected " + results.length + " face(s).");
-                    return results;
+                    if (results.length == 0) {
+                        publishProgress("No face detected. Please upload another image");
+                        return null;
+                    } else {
+                        publishProgress("Detection Finished. Detected " + results.length + " face(s).");
+                        return results;
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             mProgressDialog.show();
+            mProgressDialog.setMessage(getString(R.string.please_wait));
         }
 
         @Override
@@ -78,8 +84,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onProgressUpdate(String... values) {
-            mProgressDialog.setMessage(values[0]);
+        protected void onProgressUpdate(final String... values) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 
