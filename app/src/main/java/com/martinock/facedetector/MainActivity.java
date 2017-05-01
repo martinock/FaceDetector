@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.SparseArray;
@@ -19,14 +20,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.vision.Frame;
+import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.FaceServiceRestClient;
 import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.Frame;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SELECT_PICTURE = 1;
+    private static final String PERSON_GROUP_IF = "ifitb";
 
     private ImageView imagePreview;
     private Bitmap imageBitmap;
@@ -34,10 +40,55 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout llActionButtons;
     private ProgressDialog mProgressDialog;
 
+    private FaceServiceClient faceServiceClient;
+    com.microsoft.projectoxford.face.contract.Face[] facesDetected;
+
+    class DetectTask extends AsyncTask<InputStream, String,
+            com.microsoft.projectoxford.face.contract.Face[]> {
+
+        private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
+
+        @Override
+        protected com.microsoft.projectoxford.face.contract.Face[] doInBackground(InputStream... params) {
+            try {
+                publishProgress("Detecting Faces...");
+                com.microsoft.projectoxford.face.contract.Face[] results = faceServiceClient.detect(params[0], true, false, null);
+                if (results == null) {
+                    publishProgress("Nothing Detected");
+                    return null;
+                } else {
+                    publishProgress("Detection Finished. Detected " + results.length + " face(s).");
+                    return results;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            mProgressDialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(com.microsoft.projectoxford.face.contract.Face[] faces) {
+            mProgressDialog.dismiss();
+            facesDetected = faces;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            mProgressDialog.setMessage(values[0]);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        faceServiceClient = new FaceServiceRestClient("29a6d137accb425a8b2e5f8941fb0f4d");
 
         Button btnBrowse = (Button) findViewById(R.id.btn_browse);
         Button btnIdentify = (Button) findViewById(R.id.btn_identify);
@@ -166,7 +217,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void detectFace() {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
 
+        new DetectTask().execute(inputStream);
     }
 
     private void identifyFace() {
