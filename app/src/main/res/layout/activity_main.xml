@@ -30,27 +30,42 @@
             android:layout_gravity="center"
             android:layout_below="@id/tv_title"/>
 
+        <Button
+            android:id="@+id/btn_browse"
+            android:layout_margin="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/browse"
+            android:textAllCaps="true"
+            android:layout_gravity="center"
+            android:background="@color/colorPrimary"
+            android:layout_below="@id/tv_instruction"/>
+
         <ImageView
             android:id="@+id/image_preview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:scaleType="centerCrop"
-            android:layout_below="@id/tv_instruction"/>
+            android:layout_below="@id/btn_browse"/>
 
         <LinearLayout
+            android:id="@+id/ll_action_buttons"
             android:layout_below="@id/image_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_alignParentBottom="true">
+            android:layout_alignParentBottom="true"
+            android:visibility="gone">
+
             <Button
-                android:id="@+id/btn_browse"
+                android:id="@+id/btn_detect"
                 android:layout_margin="10dp"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/browse"
+                android:layout_weight="1"
+                android:text="@string/detect"
                 android:textAllCaps="true"
                 android:layout_gravity="center"
                 android:background="@color/colorPrimary"/>
@@ -58,9 +73,10 @@
             <Button
                 android:id="@+id/btn_process"
                 android:layout_margin="10dp"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/process"
+                android:layout_weight="1"
+                android:text="@string/identify"
                 android:textAllCaps="true"
                 android:layout_gravity="center"
                 android:background="@color/colorPrimary"/>

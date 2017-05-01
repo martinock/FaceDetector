@@ -16,6 +16,7 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.vision.Frame;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imagePreview;
     private Bitmap imageBitmap;
     private Bitmap resultBitmap;
+    private LinearLayout llActionButtons;
     private ProgressDialog mProgressDialog;
 
     @Override
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnBrowse = (Button) findViewById(R.id.btn_browse);
         Button btnProcess = (Button) findViewById(R.id.btn_process);
+        llActionButtons = (LinearLayout) findViewById(R.id.ll_action_buttons);
         imagePreview = (ImageView) findViewById(R.id.image_preview);
 
         final Paint paint = new Paint();
@@ -58,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         btnProcess.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ProcessImage(paint);
+                getFace(paint);
             }
         });
     }
@@ -76,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
                         InputStream imageStream = getContentResolver().openInputStream(imageUri);
                         imageBitmap = BitmapFactory.decodeStream(imageStream);
                         imagePreview.setImageBitmap(imageBitmap);
+                        llActionButtons.setVisibility(View.VISIBLE);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                         Toast.makeText(getApplicationContext(),
@@ -86,7 +90,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void ProcessImage(final Paint p) {
+    /* Detect faces on a picture */
+    private void getFace(final Paint p) {
         mProgressDialog = ProgressDialog.show(this, getString(R.string.loading),
                 getString(R.string.please_wait), true, false);
 
@@ -150,5 +155,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).start();
+    }
+
+    private void detectFace() {
+
+    }
+
+    private void identifyFace() {
+
     }
 }
