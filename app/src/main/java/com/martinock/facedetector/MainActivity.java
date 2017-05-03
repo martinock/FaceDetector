@@ -33,7 +33,6 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SELECT_PICTURE = 1;
-    private final String personGroupId = "ifitb";
 
     private ImageView imagePreview;
     private Bitmap imageBitmap;
@@ -106,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         private String personGroupId;
         private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
 
-        public IdentificationTask(String personGroupId) {
+        IdentificationTask(String personGroupId) {
             this.personGroupId = personGroupId;
         }
 
@@ -152,12 +151,6 @@ public class MainActivity extends AppCompatActivity {
             mProgressDialog.dismiss();
             mProgressDialog.show();
             mProgressDialog.setMessage(values[0]);
-//            runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
-//                }
-//            });
         }
     }
 
@@ -166,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
         private String personGroupId;
         private int idx;
 
-        public PersonDetectionTask(String personGroupId, int idx) {
+        PersonDetectionTask(String personGroupId, int idx) {
             this.personGroupId = personGroupId;
             this.idx = idx;
         }
@@ -202,12 +195,6 @@ public class MainActivity extends AppCompatActivity {
             mProgressDialog.dismiss();
             mProgressDialog.show();
             mProgressDialog.setMessage(values[0]);
-//            runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
-//                }
-//            });
         }
     }
 
@@ -332,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
             faceIds[i] = facesDetected[i].faceId;
         }
 
+        String personGroupId = "ifitb";
         new IdentificationTask(personGroupId).execute(faceIds);
     }
 }
