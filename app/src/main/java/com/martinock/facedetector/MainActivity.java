@@ -7,13 +7,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -22,37 +19,38 @@ import android.widget.Toast;
 
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
-import com.google.android.gms.vision.face.Face;
-import com.google.android.gms.vision.Frame;
+import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.contract.FaceRectangle;
+import com.microsoft.projectoxford.face.contract.IdentifyResult;
+import com.microsoft.projectoxford.face.contract.Person;
+import com.microsoft.projectoxford.face.contract.TrainingStatus;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final int SELECT_PICTURE = 1;
-    private static final String PERSON_GROUP_IF = "ifitb";
+    private final String personGroupId = "ifitb";
 
     private ImageView imagePreview;
     private Bitmap imageBitmap;
-    private Bitmap resultBitmap;
     private LinearLayout llActionButtons;
-    private ProgressDialog mProgressDialog;
 
     private FaceServiceClient faceServiceClient;
-    com.microsoft.projectoxford.face.contract.Face[] facesDetected;
+    Face[] facesDetected;
 
-    private class DetectTask extends AsyncTask<InputStream, String,
-            com.microsoft.projectoxford.face.contract.Face[]> {
+    private class DetectTask extends AsyncTask<InputStream, String, Face[]> {
 
         private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
 
         @Override
-        protected com.microsoft.projectoxford.face.contract.Face[] doInBackground(InputStream... params) {
+        protected Face[] doInBackground(InputStream... params) {
             try {
                 publishProgress("Detecting Faces...");
-                com.microsoft.projectoxford.face.contract.Face[] results = faceServiceClient.detect(params[0], true, false, null);
+                Face[] results = faceServiceClient.detect(params[0], true, false, null);
                 if (results == null) {
                     publishProgress("No face detected. Please upload another image");
                     return null;
@@ -78,20 +76,180 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(com.microsoft.projectoxford.face.contract.Face[] faces) {
+        protected void onPostExecute(final Face[] faces) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(),
+                            "Detection Finished. Detected " + faces.length + " face(s)." ,Toast.LENGTH_LONG).show();
+                }
+            });
             mProgressDialog.dismiss();
             facesDetected = faces;
         }
 
         @Override
         protected void onProgressUpdate(final String... values) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
-                }
-            });
+            mProgressDialog.dismiss();
+            mProgressDialog.show();
+            mProgressDialog.setMessage(values[0]);
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
+//                }
+//            });
         }
+    }
+
+    private class IdentificationTask extends  AsyncTask<UUID, String, IdentifyResult[]> {
+        private String personGroupId;
+        private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
+
+        public IdentificationTask(String personGroupId) {
+            this.personGroupId = personGroupId;
+        }
+
+        @Override
+        protected IdentifyResult[] doInBackground(UUID... params) {
+            try {
+                publishProgress("Getting person group status...");
+                TrainingStatus trainingStatus = faceServiceClient.getPersonGroupTrainingStatus(
+                        this.personGroupId);
+                if (trainingStatus.status != TrainingStatus.Status.Succeeded) {
+                    publishProgress("Person group training status is " + trainingStatus.status);
+                    return null;
+                }
+                publishProgress("Identifying...");
+
+                return faceServiceClient.identity(personGroupId, params, 1);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            mProgressDialog.show();
+            mProgressDialog.setMessage(getString(R.string.please_wait));
+        }
+
+        @Override
+        protected void onPostExecute(IdentifyResult[] identifyResults) {
+            mProgressDialog.dismiss();
+
+            int i = 0;
+            for(IdentifyResult identifyResult:identifyResults) {
+                new PersonDetectionTask(personGroupId, i).execute(identifyResult
+                        .candidates.get(0).personId);
+                i++;
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(final String... values) {
+            mProgressDialog.dismiss();
+            mProgressDialog.show();
+            mProgressDialog.setMessage(values[0]);
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
+//                }
+//            });
+        }
+    }
+
+    private class PersonDetectionTask extends AsyncTask<UUID, String, Person> {
+        private ProgressDialog mProgressDialog = new ProgressDialog(MainActivity.this);
+        private String personGroupId;
+        private int idx;
+
+        public PersonDetectionTask(String personGroupId, int idx) {
+            this.personGroupId = personGroupId;
+            this.idx = idx;
+        }
+
+        @Override
+        protected Person doInBackground(UUID... params) {
+            try {
+                publishProgress("Getting person group status...");
+                return faceServiceClient.getPerson(personGroupId, params[0]);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            mProgressDialog.show();
+            mProgressDialog.setMessage(getString(R.string.please_wait));
+        }
+
+        @Override
+        protected void onPostExecute(Person person) {
+            mProgressDialog.dismiss();
+
+            imageBitmap = drawFaceRectangleOnBitmap(imageBitmap,
+                    facesDetected[idx], person.name);
+            imagePreview.setImageBitmap(imageBitmap);
+        }
+
+        @Override
+        protected void onProgressUpdate(final String... values) {
+            mProgressDialog.dismiss();
+            mProgressDialog.show();
+            mProgressDialog.setMessage(values[0]);
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(getApplicationContext(), values[0] ,Toast.LENGTH_LONG).show();
+//                }
+//            });
+        }
+    }
+
+    private Bitmap drawFaceRectangleOnBitmap(Bitmap imageBitmap,
+                                             Face face, String name) {
+        Bitmap bitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.WHITE);
+        paint.setStrokeWidth(12);
+
+        if (facesDetected != null) {
+            FaceRectangle faceRectangle = face.faceRectangle;
+            canvas.drawRect(
+                    faceRectangle.left,
+                    faceRectangle.top,
+                    faceRectangle.left + faceRectangle.width,
+                    faceRectangle.top + faceRectangle.height,
+                    paint);
+            drawTextOnCanvas(
+                    canvas,
+                    100,
+                    ((faceRectangle.left + faceRectangle.width) / 2) + 100,
+                    (faceRectangle.top + faceRectangle.height) + 50,
+                    Color.WHITE,
+                    name);
+        }
+        return bitmap;
+    }
+
+    private void drawTextOnCanvas(Canvas canvas, int textSize, int x, int y, int color, String name) {
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(color);
+        paint.setTextSize(textSize);
+
+        float textWidth = paint.measureText(name);
+        canvas.drawText(name, x-(textWidth/2), y - (textSize/2), paint);
     }
 
     @Override
@@ -99,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        faceServiceClient = new FaceServiceRestClient("29a6d137accb425a8b2e5f8941fb0f4d");
+        faceServiceClient = new FaceServiceRestClient("5388739dcaf64c4e8fd2a5a37a132788");
 
         Button btnBrowse = (Button) findViewById(R.id.btn_browse);
         Button btnIdentify = (Button) findViewById(R.id.btn_identify);
@@ -169,6 +327,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void identifyFace() {
+        final UUID[] faceIds = new UUID[facesDetected.length];
+        for (int i = 0; i < facesDetected.length; ++i) {
+            faceIds[i] = facesDetected[i].faceId;
+        }
 
+        new IdentificationTask(personGroupId).execute(faceIds);
     }
 }
