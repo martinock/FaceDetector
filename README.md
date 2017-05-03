@@ -8,5 +8,5 @@ Face identification implementation using [Microsoft Cognitive API](https://www.m
 4. Press "Detect Face" button
 5. Press "Identify Face" button
 
-##Credits
+## Credits
 [EDMT Dev](http://www.edmtdev.com/)
